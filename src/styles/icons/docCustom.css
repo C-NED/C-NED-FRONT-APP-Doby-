@@ -1,0 +1,8 @@
+/* docCustom.css */
+.swagger-ui .swagger-ui .info,
+.swagger-ui .swagger-ui .description,
+.swagger-ui .swagger-ui .swagger-ui .model .model-title,
+.swagger-ui .swagger-ui .swagger-ui .model .model-description,
+.swagger-ui .swagger-ui .swagger-ui .parameter-description {
+    color: black !important;
+}
