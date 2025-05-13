@@ -9,6 +9,7 @@ import HistoryScreen from '../screens/HistoryScreen';
 import FavoriteScreen from '../screens/FavoriteScreen';
 import SettingScreen from '../screens/SettingScreen';
 import PathSelectScreen from '../screens/PathSelectScreen';
+import NaviScreen from '../screens/NaviScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -80,6 +81,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Main" component={TabNavigator} />
         <Stack.Screen name="Path" component={PathSelectScreen} />
+        <Stack.Screen name="Navi" component={NaviScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

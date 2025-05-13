@@ -86,7 +86,7 @@ export default function LoginScreen() {
         )}
         <View style={styles.btnView}>
         <TouchableOpacity
-            onPress={() => handleNaverLogin()}
+            onPress={() => navigator.navigate('Navi')}
             style={styles.btn}
         >
             <Text style={styles.btnText}>네이버로 한 번에 로그인</Text>

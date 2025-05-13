@@ -118,7 +118,7 @@ export default function PathSelectScreen() {
           <View style={{ height: '66%', width: '83%', marginTop: 20 }}>
             <WebView
               ref={webviewRef}
-              source={{ uri: 'http://lynnkrealm.me/' }}
+              source={{ uri: 'https://lynnkrealm.me/' }}
               onMessage={(event) => console.log('📲 WebView 메시지 수신:', event.nativeEvent.data)}
               originWhitelist={['*']}
               javaScriptEnabled={true}
