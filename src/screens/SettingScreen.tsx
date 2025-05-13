@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, Switch } from 'react-native';
+import { View, Text, StyleSheet, Image, Switch, TouchableOpacity } from 'react-native';
 import styles from '../styles/theme';
 import { ScrollView } from 'react-native-gesture-handler';
 
@@ -15,39 +15,46 @@ export default function SettingScreen() {
          <Text style={styles.title1}>설정</Text>
          <Text style={styles.title2}>설정</Text>
          </View>
+         
 
-         <View style={{width:'84%',height:1,backgroundColor:'white',opacity:0.5,alignSelf:'center'}} />
+         <View style={{width:'84%',height:1,backgroundColor:'white',opacity:0.5,alignSelf:'center',marginTop:'5%'}} />
 
-         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 50 }}>
-        <Text style={[styles.showInfoText, { color: 'white', marginRight: '25%' }]}>알림 설정</Text>
-        <Switch
-          trackColor={{ false: "#969E96", true: "#000000" }}
-          thumbColor={isEnabled ? "#969E96" : "#FDFFFC"}
-          onValueChange={toggleSwitch}
-          value={isEnabled}
-        />
-      </View>
+         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 60,}}>
+            <Text style={[styles.showInfoText, { color: 'white', marginRight: '28%' }]}>알림 설정</Text>
+            <Switch
+              trackColor={{ false: "#969E96", true: "#000000" }}
+              thumbColor={isEnabled ? "#969E96" : "#FDFFFC"}
+              onValueChange={toggleSwitch}
+              value={isEnabled}
+            />
+        </View>
 
 
         <View style={{width:'84%',height:1,backgroundColor:'white',opacity:0.5,alignSelf:'center'}} />
           
-          <View style={{height:50}}>
-            <Text style={[styles.showInfoText,{color:'white'}]}>계정 관리</Text>
-          </View>
+        <TouchableOpacity onPress={() => console.log('user info')} style={{width:'83%'}}>  
+        <View style={{ height: 60, width: '83%', justifyContent: 'center', paddingLeft:'15%' }}>
+          <Text style={[styles.showInfoText, { color: 'white' }]}>계정 관리</Text>
+        </View>
+        </TouchableOpacity>
           
-          <View style={{width:'84%',height:1,backgroundColor:'white',opacity:0.5,alignSelf:'center'}} />
+        <View style={{width:'84%',height:1,backgroundColor:'white',opacity:0.5,alignSelf:'center'}} />
           
-          <View style={{height:50}}>
-            <Text style={[styles.showInfoText,{color:'white'}]}>약관 및 정책</Text>
+        <TouchableOpacity onPress={() => console.log('show info')} style={{width:'83%'}}>  
+        <View style={{ height: 60, width: '83%', justifyContent: 'center', paddingLeft: '15%' }}>
+          <Text style={[styles.showInfoText, { color: 'white' }]}>약관 및 정책</Text>
+        </View>
+        </TouchableOpacity>
+
+        <View style={{width:'84%',height:1,backgroundColor:'white',opacity:0.5,alignSelf:'center'}} />
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 60}}>
+            <Text style={[styles.showInfoText, { color: 'white', marginRight: '32%' }]}>앱 버전</Text>
+            <Text style={[styles.showInfoText, { color: 'white' }]}>1.0.0</Text>
         </View>
 
         <View style={{width:'84%',height:1,backgroundColor:'white',opacity:0.5,alignSelf:'center'}} />
 
-        <View style={{height:50}}>
-            <Text style={[styles.showInfoText,{color:'white'}]}>앱 버전</Text>
-        </View>
-
-        <View style={{width:'84%',height:1,backgroundColor:'white',opacity:0.5,alignSelf:'center'}} />
 
       </View>
   </ScrollView>

@@ -37,13 +37,13 @@ export default function HistoryScreen() {
               </View>
         
        <View style={styles.btnView}>
-        <TouchableOpacity style={[styles.btn]} onPress={() => console.log('Add new history')}> 
+        <TouchableOpacity style={[styles.btn]} onPress={() => navigation.navigate('Path')}> 
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
             <Image 
               source={require('../styles/icons/plus.png')}
               style={{ width: 25, height: 25, marginRight: 10 }} 
             />
-            <Text style={styles.btnText}>새로운 장소 추가</Text>
+            <Text style={styles.btnText}>새 경로 만들기</Text>
           </View>
         </TouchableOpacity>
       </View>

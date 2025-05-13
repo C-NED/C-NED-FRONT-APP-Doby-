@@ -42,8 +42,8 @@ function TabNavigator() {
             <Image
               source={icon}
               style={{
-                width: 40,
-                height: 40,
+                width: 38,
+                height: 38,
                 resizeMode: 'cover',
                 marginTop: 0,
               }}
@@ -55,7 +55,7 @@ function TabNavigator() {
         tabBarInactiveTintColor: '#aaa',
         tabBarStyle: {
           backgroundColor: '#E0E0E0',
-          height: 65,
+          height: 55,
           position: 'absolute',
         },
         headerShown: false,
