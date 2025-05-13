@@ -32,13 +32,13 @@
 ---
 
 ## 📂 폴더 구조
-/src
-┣ /screens # 주요 화면 컴포넌트 (Login, Home 등)
-┣ /navigations # Stack, Tab 네비게이터 구성
-┣ /components # 공통 UI 컴포넌트
-┣ /api # 백엔드 API 통신 모듈
-┣ /hooks # 커스텀 훅 (e.g., useAuth)
-┗ App.tsx # 앱 진입점
+/src<br>
+┣ /screens   # 주요 화면 컴포넌트 (Login, Home 등)<br>
+┣ /navigations   # Stack, Tab 네비게이터 구성<br>
+┣ /components   # 공통 UI 컴포넌트<br>
+┣ /api   # 백엔드 API 통신 모듈<br>
+┣ /hooks   # 커스텀 훅 (e.g., useAuth)<br>
+┗ App.tsx   # 앱 진입점
 
 
 ---
