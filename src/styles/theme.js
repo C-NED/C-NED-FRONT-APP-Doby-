@@ -14,7 +14,7 @@ export default styles =  StyleSheet.create({
       color: 'white',textAlign:'center', fontSize:24 
   },
   btnView:{
-      marginTop: '5%',width:'83%',height:'9%'
+      marginTop: '5%',width:'83%',height:'8.5%'
   },
   btn:{
       backgroundColor: '#97AA98',height:'100%',justifyContent:'center',borderRadius:8
@@ -52,7 +52,7 @@ export default styles =  StyleSheet.create({
     fontWeight: 'bold',
   },
   searchView:{
-    borderRadius:8,backgroundColor:'white',width:'83%',marginTop:'5%',height:'9%'
+    borderRadius:8,backgroundColor:'#F0F0F0',width:'83%',marginTop:'5%',height:'8.5%'
   },
   searchInput:{
     fontSize:23,borderRadius:8
@@ -61,10 +61,10 @@ export default styles =  StyleSheet.create({
     backgroundColor:'#F0F0F0',width:'83%',height:'28%', marginTop:'5%',borderRadius:8
  },
  showInfoView2:{
-    flexDirection: 'row', justifyContent: 'space-between'
+    flexDirection: 'row', justifyContent: 'space-between',marginRight:'5%'
  },
  showInfoTitle:{
-    marginLeft: '5%',
+    marginLeft: '7%',
         marginTop: '5%',
         fontWeight: 'bold',
         fontSize: 24,
@@ -79,7 +79,7 @@ export default styles =  StyleSheet.create({
         fontWeight: 'bold',
  },
  showInfoTextView:{
-    marginLeft:'5%'
+    marginLeft:'7%'
  },
  showInfoText:{
     fontSize:20,
@@ -116,4 +116,11 @@ export default styles =  StyleSheet.create({
     fontSize: 16,
     color: '#888',
   },
+  separator:{
+    width: '84%',
+    height: 1,
+    backgroundColor: '#ABABAB',
+    opacity: 0.5,
+    alignSelf: 'center',
+  }
 })

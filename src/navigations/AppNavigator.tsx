@@ -77,8 +77,8 @@ export default function AppNavigator() {
         initialRouteName="Login"
         screenOptions={{ headerShown: false }}
       >
-        {/* <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Main" component={TabNavigator} /> */}
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Main" component={TabNavigator} />
         <Stack.Screen name="Path" component={PathSelectScreen} />
       </Stack.Navigator>
     </NavigationContainer>

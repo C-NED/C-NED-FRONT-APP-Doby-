@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Image,ScrollView, TouchableOpacity } from 'react-native';
 import styles from '../styles/theme';
 import { TextInput } from 'react-native-gesture-handler';
-import { useNavigation } from '@react-navigation/native';
+import { TabActions, useNavigation } from '@react-navigation/native';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -55,18 +55,18 @@ const HomeScreen = () => {
   </TouchableOpacity>
 </View>
 
-
-
     <View style={styles.showInfoView}>
     <View style={styles.showInfoView2}>
     <Text
       style={styles.showInfoTitle}>
       최근 목적지
     </Text>
+    <TouchableOpacity onPress={() => navigation.navigate('기록')} style={{marginRight: '5%',marginTop: '5%'}}>
     <Text
-      style={styles.showInfoMore}>
+      style={[styles.showInfoMore,{marginRight:0,marginTop:0}]}>
       모두 보기
     </Text>
+    </TouchableOpacity>
   </View>
 
       <View style={styles.showInfoTextView}>
@@ -82,10 +82,12 @@ const HomeScreen = () => {
       style={styles.showInfoTitle}>
       좋아하는 장소
     </Text>
+    <TouchableOpacity onPress={() => navigation.navigate('장소')} style={{marginRight: '5%',marginTop: '5%'}}>
     <Text
-      style={styles.showInfoMore}>
+      style={[styles.showInfoMore,{marginRight:0,marginTop:0}]}>
       모두 보기
     </Text>
+    </TouchableOpacity>
   </View>
 
       <View style={styles.showInfoTextView}>
