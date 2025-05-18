@@ -45,7 +45,7 @@ export default function NavigationScreen() {
       <View style={styles.topIcons}>
         <Image source={alerts.outbreak ? require('../styles/icons/outbreak_blue.png') : require('../styles/icons/outbreak.png')} style={{height:60,width:60}} />
         <Image source={alerts.vsl ? require('../styles/icons/vsl_red.png') : require('../styles/icons/vsl.png')} style={{height:60,width:60}} />
-        <Image source={alerts.dinc ? require('../styles/icons/dincident_green.png'):require('../styles/icons/dincident.png')} style={{height:60,width:60}} />
+        <Image source={alerts.dinc ? require('../styles/icons/dincident_green.png'):require('../styles/icons/dincident.png')} style={{height:65,width:65}} />
         <Image source={alerts.caution ? require('../styles/icons/caution_yellow.png'):require('../styles/icons/caution.png')} style={{height:60,width:60}} />
       </View>
 
@@ -73,7 +73,7 @@ export default function NavigationScreen() {
         <Button title="3차선" onPress={() => updateLaneFromApi(3)} />
         <Button title="4차선" onPress={() => updateLaneFromApi(4)} />
       </View> */}
-      
+
       {/* <View style={[styles.buttons,{scaleX:-1}]}>
         <Button title="Crash" onPress={() => handleAlert('crash', '충돌 위험 주의하세요')} />
         <Button title="Stop" onPress={() => handleAlert('stop', '정지 구간입니다')} />
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: '8%',
     backgroundColor: '#111',
-    transform: [{ perspective: 800 }, { rotateX: '60deg' }],
+    transform: [{ perspective: 600 }, { rotateX: '60deg' }],
     overflow: 'hidden',
   },
   laneLine: {
@@ -116,6 +116,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 20,
+    opacity: 0.9,
   },
   bottomIcons: {
     position: 'absolute',

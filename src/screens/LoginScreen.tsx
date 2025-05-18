@@ -4,6 +4,7 @@ import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ScrollView } from 'react-native-gesture-handler';
 import styles from '../styles/theme';
+import axiosInstance from '../api/axiosInstance';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
@@ -11,11 +12,36 @@ export default function LoginScreen() {
     const [click, setClick] = useState(false);
     const navigator = useNavigation();
 
-    const handleLogin = () => {
-      console.log('Login with', email, password);
-      navigator.navigate('Main');
-      // TODO: navigate to Home after successful login
-    };
+   const handleLogin = async () => {
+  try {
+    const res = await axiosInstance.post('/auth/login', {
+        email,
+        password,
+        type:"USER"
+        }, {
+        headers: {
+            'Content-Type': 'application/json', // ← 이게 있어야 함
+        }
+        });
+        console.log(res.request)
+
+    console.log('✅ Login success:', res.data);
+
+    if (res.status === 200) {
+       console.log('Login successful'); 
+       navigator.navigate('Main'); // 성공했을 때만 이동
+    }
+  } catch (err) {
+    if (typeof err === 'object' && err !== null && 'response' in err) {
+      const error = err as { response?: { data?: any }; message?: string };
+      console.error('❌ Login failed:', error.response?.data || error.message);
+      Alert.alert('로그인 실패', error.response?.data?.detail || '서버 오류가 발생했습니다.');
+    } else {
+      console.error('❌ Login failed:', String(err));
+      Alert.alert('로그인 실패', '서버 오류가 발생했습니다.');
+    }
+  }
+};
 
     const handleNaverLogin = () => {
       console.log('Login with Naver');
@@ -24,6 +50,8 @@ export default function LoginScreen() {
     const showLoginForm = () => {
         setClick(!click);
     }
+
+
   
     return (
     <ScrollView style={{ backgroundColor: '#373737'}} 
