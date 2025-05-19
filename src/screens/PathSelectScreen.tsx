@@ -1,24 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView, Keyboard } from 'react-native';
 import { WebView } from 'react-native-webview';
+import axiosInstance from '../api/axiosInstance';
 
-const callYourRouteApi = ({ from, to }) => {
+const callRouteApi = ({ from, to }) => {
   console.log('🚀 API 호출');
   console.log('출발지:', from);
   console.log('도착지:', to);
-};
-
-// 🛑 더미 유사도 API (실제로는 네가 만든 API로 교체)
-const fetchSimilarPlace = async (keyword) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        keyword: `${keyword}`,
-        lat: 37.5665 + Math.random() * 0.01,
-        lng: 126.9780 + Math.random() * 0.01,
-      });
-    }, 300);
-  });
 };
 
 export default function PathSelectScreen() {
@@ -30,11 +18,105 @@ export default function PathSelectScreen() {
   const [endCoords, setEndCoords] = useState(null);
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
+  const roadOptions = ['trafast', 'tracomfort', 'traoptimal', 'traavoidtoll', 'traavoidcaronly'];
+  const [routes, setRoutes] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const routeList = [
-    { time: '1시간 32분', label: '(가장 빠른 길)', traffic: ['#00E676', '#00E676', '#FFEB3B', '#00E676'] },
-    { time: '1시간 45분', label: '(혼잡 구간 있음)', traffic: ['#FFEB3B', '#FFEB3B', '#FF5722', '#FFEB3B'] },
-  ];
+  const formatDuration = (ms: number): string => {
+  const totalMinutes = Math.floor(ms / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours > 0) return `${hours}시간 ${minutes}분`;
+  return `${minutes}분`;
+};
+
+const optionLabelMap: Record<string, string> = {
+  trafast: "가장 빠른 길",
+  tracomfort: "편한 길",
+  traoptimal: "최적 경로",
+  traavoidtoll: "무료 도로 우선",
+  traavoidcaronly: "일반 도로 우선",
+};
+
+const trafficColorMap = {
+  0: "#000000", // 신호없음
+  1: "#00E676", // 원활
+  2: "#FFEB3B", // 서행
+  3: "#FF5722", // 정체
+};
+
+  const fetchDestination = async () => {
+    if (searchInput.trim() === '') return;
+
+    try {
+      Keyboard.dismiss(); // 키보드 닫기 (UX 개선)
+      const res = await axiosInstance.get(
+        `/navigation/locationpick/search?keyword=${encodeURIComponent(searchInput)}`,
+      );
+      console.log('📍 목적지 검색 결과:', res.data);
+      const keyword = searchInput;
+      const lng = res.data.mapx;
+      const lat = res.data.mapy;
+      console.log('📍 검색된 목적지:', keyword, lat, lng);
+      return { keyword, lat, lng };
+    } catch (error) {
+      console.error('❌ 목적지 요청 실패:', error);
+    }
+  };
+
+  
+  const requestAllRoutes = async () => {
+  setLoading(true); // ✅ 로딩 시작
+  const Newroutes = [];
+
+  for (let i = 0; i < roadOptions.length; i++) {
+    const option = roadOptions[i];
+
+    try {
+     const res = await axiosInstance.get(
+        `https://cned.fly.dev/navigation/route_guide?start=${startCoords.lng}&start=${startCoords.lat}&goal=${endCoords.lng}&goal=${endCoords.lat}&road_option=${option}`,
+      );
+
+      console.log(`📦 ${option} 응답 수신:`, res.data);
+
+      const extractRouteSummary = (resData, option) => {
+        const route = resData[option]?.[0];
+        if (!route) return null;
+
+        return {
+          time: formatDuration(route.summary.duration),
+          label: optionLabelMap[option] || '경로',
+          traffic: route.section.map(sec => trafficColorMap[sec.congestion])
+        };
+      };
+
+      // ✅ 여기서 res.data를 파싱하여 Newroutes에 추가
+      const routeSummary = extractRouteSummary(res.data, option);
+      console.log('🚀 Newroutes:', routeSummary);
+      Newroutes.push(routeSummary);
+
+      // Newroutes.push({
+      //   option,
+      //   ...res.data, // ← 이미 파싱 완료 상태로 들어간다고 가정
+      // });
+
+    } catch (err) {
+      console.error(`❌ ${option} 요청 실패:`, err);
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 10000));
+  }
+
+  setRoutes(Newroutes); // ✅ 한 번에 상태 업데이트
+  setLoading(false); // ✅ 로딩 종료
+};
+  
+
+  // const routeList = [
+  //   { time: '1시간 32분', label: '(가장 빠른 길)', traffic: ['#00E676', '#00E676', '#FFEB3B', '#00E676'] },
+  //   { time: '1시간 45분', label: '(혼잡 구간 있음)', traffic: ['#FFEB3B', '#FFEB3B', '#FF5722', '#FFEB3B'] },
+  // ];
 
   // ✅ RN → WebView : 마커 표시 명령만
   const sendPlaceToWebView = (keyword, lat, lng, mode) => {
@@ -56,29 +138,38 @@ export default function PathSelectScreen() {
     setSelecting(type);
     setShowMap(true);
 
+    // 3초 뒤에 자동으로 숨기기
+    setTimeout(() => {
+      setShowMap(false); // ✅ WebView 숨기기
+    }, 3000);
+
     // 1. 유사도 API 호출
     try {
-      const result = await fetchSimilarPlace(searchInput);
+      const result = await fetchDestination(searchInput);
 
       // 2. RN state 저장
       if (type === 'start') {
-        setStart(result.keyword);
-        setStartCoords({ lat: result.lat, lng: result.lng });
+        setStart(result?.keyword);
+        setStartCoords({ lat: result?.lat, lng: result?.lng });
       } else {
-        setEnd(result.keyword);
-        setEndCoords({ lat: result.lat, lng: result.lng });
+        setEnd(result?.keyword);
+        setEndCoords({ lat: result?.lat, lng: result?.lng });
       }
 
       // 3. WebView에 마커 표시 명령
-      sendPlaceToWebView(result.keyword, result.lat, result.lng, type);
+      sendPlaceToWebView(result?.keyword, result?.lat, result?.lng, type);
     } catch (error) {
-      console.error('유사도 API 오류:', error);
+      console.error('검색어 API 오류:', error);
     }
   };
 
+    const hasRunRef = useRef(false);
+
   useEffect(() => {
-    if (startCoords && endCoords) {
-      callYourRouteApi({ from: startCoords, to: endCoords });
+    if (startCoords && endCoords && !hasRunRef.current) {
+      callRouteApi({ from: startCoords, to: endCoords });
+      hasRunRef.current = true; // ✅ 중복 실행 방지
+      requestAllRoutes();
     }
   }, [startCoords, endCoords]);
 
@@ -93,6 +184,10 @@ export default function PathSelectScreen() {
               style={[styles.searchInput, { backgroundColor: '#EEEEEE' }]}
               value={searchInput}
               onChangeText={setSearchInput}
+              onSubmitEditing={fetchDestination} // ✅ 엔터 키 누를 때만 실행
+              returnKeyType="search"
+              blurOnSubmit={true} // 안드에서 submit 후 키보드 내려가도록
+              multiline={false} // 꼭 false여야 엔터가 "완료"로 동작함
             />
           </View>
         </View>
@@ -118,7 +213,7 @@ export default function PathSelectScreen() {
           <View style={{ height: '66%', width: '83%', marginTop: 20 }}>
             <WebView
               ref={webviewRef}
-              source={{ uri: 'https://lynnkrealm.me/' }}
+              source={{ uri: 'http://lynnkrealm.me/' }}
               onMessage={(event) => console.log('📲 WebView 메시지 수신:', event.nativeEvent.data)}
               originWhitelist={['*']}
               javaScriptEnabled={true}
@@ -130,7 +225,7 @@ export default function PathSelectScreen() {
 
         {!showMap && startCoords && endCoords && (
           <View style={{ width: '83%', marginTop: 20 }}>
-            {routeList.map((item, index) => (
+            {routes.map((item, index) => (
               <TouchableOpacity key={index} onPress={() => console.log(`선택한 경로: ${item.label}`)} style={[styles.cardContainer, { marginBottom: 15 }]}>
                 <View style={styles.topRow}>
                   <Text style={styles.timeText}>{item.time}</Text>

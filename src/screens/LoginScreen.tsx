@@ -13,29 +13,29 @@ export default function LoginScreen() {
     const navigator = useNavigation();
 
    const handleLogin = async () => {
-  try {
-    const res = await axiosInstance.post('/auth/login', {
-        email,
-        password,
-        type:"USER"
-        }, {
-        headers: {
-            'Content-Type': 'application/json', // ← 이게 있어야 함
+    try {
+        const res = await axiosInstance.post('/auth/login', {
+            email,
+            password,
+            type:"USER"
+            }, {
+            headers: {
+                'Content-Type': 'application/json', // ← 이게 있어야 함
+            }
+            });
+            console.log(res.request)
+
+        console.log('✅ Login success:', res.data);
+
+        if (res.status === 200) {
+        console.log('Login successful'); 
+        navigator.navigate('Main'); // 성공했을 때만 이동
         }
-        });
-        console.log(res.request)
-
-    console.log('✅ Login success:', res.data);
-
-    if (res.status === 200) {
-       console.log('Login successful'); 
-       navigator.navigate('Main'); // 성공했을 때만 이동
-    }
   } catch (err) {
-    if (typeof err === 'object' && err !== null && 'response' in err) {
-      const error = err as { response?: { data?: any }; message?: string };
-      console.error('❌ Login failed:', error.response?.data || error.message);
-      Alert.alert('로그인 실패', error.response?.data?.detail || '서버 오류가 발생했습니다.');
+        if (typeof err === 'object' && err !== null && 'response' in err) {
+        const error = err as { response?: { data?: any }; message?: string };
+        console.error('❌ Login failed:', error.response?.data || error.message);
+        Alert.alert('로그인 실패', error.response?.data?.detail || '서버 오류가 발생했습니다.');
     } else {
       console.error('❌ Login failed:', String(err));
       Alert.alert('로그인 실패', '서버 오류가 발생했습니다.');

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, Image,ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, Image,ScrollView, TouchableOpacity, Keyboard } from 'react-native';
 import styles from '../styles/theme';
 import { TextInput } from 'react-native-gesture-handler';
 import { TabActions, useNavigation } from '@react-navigation/native';
+import axiosInstance from '../api/axiosInstance';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -38,7 +39,8 @@ const HomeScreen = () => {
           placeholder="목적지를 검색하세요"
           style={styles.searchInput}
           value={destination}
-          onChangeText={setDestination} />
+          onChangeText={setDestination}
+          />
     </View>
     </View>
 
