@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView, Keyboard } from 'react-native';
 import { WebView } from 'react-native-webview';
 import axiosInstance from '../api/axiosInstance';
+import { useNavigation } from '@react-navigation/native';
 
 const callRouteApi = ({ from, to }) => {
   console.log('🚀 API 호출');
@@ -21,6 +22,7 @@ export default function PathSelectScreen() {
   const roadOptions = ['trafast', 'tracomfort', 'traoptimal', 'traavoidtoll', 'traavoidcaronly'];
   const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(false);
+  const navigation = useNavigation();
 
   const formatDuration = (ms: number): string => {
   const totalMinutes = Math.floor(ms / 60000);
@@ -75,7 +77,7 @@ const trafficColorMap = {
 
     try {
      const res = await axiosInstance.get(
-        `https://cned.fly.dev/navigation/route_guide?start=${startCoords.lng}&start=${startCoords.lat}&goal=${endCoords.lng}&goal=${endCoords.lat}&road_option=${option}`,
+        `/navigation/route_guide?start=${startCoords.lng}&start=${startCoords.lat}&goal=${endCoords.lng}&goal=${endCoords.lat}&road_option=${option}`,
       );
 
       console.log(`📦 ${option} 응답 수신:`, res.data);
@@ -87,7 +89,8 @@ const trafficColorMap = {
         return {
           time: formatDuration(route.summary.duration),
           label: optionLabelMap[option] || '경로',
-          traffic: route.section.map(sec => trafficColorMap[sec.congestion])
+          traffic: route.section.map(sec => trafficColorMap[sec.congestion]),
+          realLabel:option
         };
       };
 
@@ -111,7 +114,93 @@ const trafficColorMap = {
   setRoutes(Newroutes); // ✅ 한 번에 상태 업데이트
   setLoading(false); // ✅ 로딩 종료
 };
-  
+
+
+const selectRoute = async (start, end, option: roadOptions) => {
+  const attemptRoute = async (startCoords, endCoords) => {
+    const payload = {
+      start: [parseFloat(startCoords.lat), parseFloat(startCoords.lng)],
+      goal: [parseFloat(endCoords.lat), parseFloat(endCoords.lng)],
+      road_option: option,
+    };
+
+    try {
+      const res = await axiosInstance.post(`/navigation/create`, payload, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (res.status === 200) {
+        console.log('🧾 받은 응답:', JSON.stringify(res.data, null, 2));
+        console.log('📦 경로 선택 응답 수신:', res.data);
+        return res.data;
+      }
+
+      return null;
+    } catch (err) {
+      console.error('❌ 경로 선택 요청 실패:', err);
+      return null;
+    }
+  };
+
+  let currentStart = start;
+  let currentEnd = end;
+
+  for (let i = 0; i < 5; i++) {
+    console.log(`${i + 1}번째 시도`);
+    const result = await attemptRoute(currentStart, currentEnd);
+    if (result) {
+      navigation.navigate('NaviScreen');
+      return result;
+    }
+
+    // 좌표 보정 요청
+    try {
+      const body = {
+        start_lat: currentStart.lat,
+        start_lng: currentStart.lng,
+        goal_lat: currentEnd.lat,
+        goal_lng: currentEnd.lng,
+        road_option: option,
+      };
+      console.log(JSON.stringify(body, null, 2))
+
+      const matchRes = await axiosInstance.post(
+        `/navigation/search_road_location`,
+        body,
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+
+      const newCoords = matchRes.data;
+      console.log('🧭 좌표 보정됨:', JSON.stringify(newCoords, null, 2));
+
+      currentStart = {
+        lat: newCoords.start_lat,
+        lng: newCoords.start_lng,
+      };
+      currentEnd = {
+        lat: newCoords.goal_lat,
+        lng: newCoords.goal_lng,
+      };
+    } catch (err: any) {
+      console.error('📛 좌표 보정 실패:', err);
+
+      // 🎯 여기서 상태 코드가 404면 반복 계속 (좌표 못 찾음), 그 외는 종료
+      if (err?.response?.status === 404) {
+        console.warn('⚠️ 좌표 보정 실패 - 계속 반복 시도');
+        continue;
+      } else {
+        console.error('❌ 예기치 못한 오류 - 루프 종료');
+        break;
+      }
+    }
+  }
+
+  console.log('🚨 경로 요청 실패: 도로 위 좌표로 경로를 찾을 수 없습니다.');
+  return null;
+};
+
 
   // const routeList = [
   //   { time: '1시간 32분', label: '(가장 빠른 길)', traffic: ['#00E676', '#00E676', '#FFEB3B', '#00E676'] },
@@ -226,7 +315,7 @@ const trafficColorMap = {
         {!showMap && startCoords && endCoords && (
           <View style={{ width: '83%', marginTop: 20 }}>
             {routes.map((item, index) => (
-              <TouchableOpacity key={index} onPress={() => console.log(`선택한 경로: ${item.label}`)} style={[styles.cardContainer, { marginBottom: 15 }]}>
+              <TouchableOpacity key={index} onPress={() => selectRoute(startCoords,endCoords,item.realLabel)} style={[styles.cardContainer, { marginBottom: 15 }]}>
                 <View style={styles.topRow}>
                   <Text style={styles.timeText}>{item.time}</Text>
                   <View style={styles.dotRow}>
