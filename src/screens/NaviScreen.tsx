@@ -22,7 +22,7 @@ export default function NavigationScreen() {
     vsl: true,
     dinc: true,
     caution: true,
-    ainc:false
+    aic:true
   });
 
   const [toastMsg, setToastMsg] = useState('');
@@ -64,7 +64,7 @@ export default function NavigationScreen() {
       </View>
 
       <View style={styles.bottomIcons}>
-        <Image source={alerts.ainc?require('../styles/icons/ai_danger_purple.png'):require('../styles/icons/ai_danger.png')} style={{height:120,width:120}} />
+        <Image source={alerts.aic?require('../styles/icons/ai_danger_purple.png'):require('../styles/icons/ai_danger.png')} style={{height:120,width:120}} />
         <Image source={require('../styles/icons/speed.png')} style={{height:120,width:120}} />
       </View>
 
@@ -133,10 +133,10 @@ const styles = StyleSheet.create({
   },
   toast: {
     position: 'absolute',
-    top: '40%',
+    top: '27%',
     left: '10%',
     width: '80%',
-    height: 150,
+    height: 300,
     backgroundColor: 'rgba(0,0,0,0.9)',
     borderRadius: 20,
     justifyContent: 'center',
