@@ -60,14 +60,14 @@ const trafficColorMap = {
       const keyword = searchInput;
       const lng = res.data.mapx;
       const lat = res.data.mapy;
-      console.log('📍 검색된 목적지:', keyword, lat, lng);
-      return { keyword, lat, lng };
+      const rAddr = res.data.roadAddress;
+      console.log('📍 검색된 목적지:', keyword, lat, lng, rAddr);
+      return { keyword, lat, lng, rAddr };
     } catch (error) {
       console.error('❌ 목적지 요청 실패:', error);
     }
   };
 
-  
   const requestAllRoutes = async () => {
   setLoading(true); // ✅ 로딩 시작
   const Newroutes = [];
@@ -115,8 +115,8 @@ const trafficColorMap = {
   setLoading(false); // ✅ 로딩 종료
 };
 
-
-const selectRoute = async (start, end, option: roadOptions) => {
+  
+ const selectRoute = async (start, end, option: roadOptions) => {
   const attemptRoute = async (startCoords, endCoords) => {
     const payload = {
       start: [parseFloat(startCoords.lat), parseFloat(startCoords.lng)],
@@ -145,33 +145,17 @@ const selectRoute = async (start, end, option: roadOptions) => {
   let currentStart = start;
   let currentEnd = end;
 
-  for (let i = 0; i < 5; i++) {
-    console.log(`${i + 1}번째 시도`);
+  for (let i = 0; i < 3; i++) {
     const result = await attemptRoute(currentStart, currentEnd);
     if (result) {
-      navigation.navigate('NaviScreen');
+      navigation.navigate('Navi');
       return result;
     }
 
-    // 좌표 보정 요청
     try {
-      const body = {
-        start_lat: currentStart.lat,
-        start_lng: currentStart.lng,
-        goal_lat: currentEnd.lat,
-        goal_lng: currentEnd.lng,
-        road_option: option,
-      };
-      console.log(JSON.stringify(body, null, 2))
-
-      const matchRes = await axiosInstance.post(
-        `/navigation/search_road_location`,
-        body,
-        {
-          headers: { 'Content-Type': 'application/json' },
-        }
+      const matchRes = await axiosInstance.get(
+        `/navigation/search_road_location?lat=${currentStart.lat}&lng=${currentStart.lng}&goal_lat=${currentEnd.lat}&goal_lng=${currentEnd.lng}`
       );
-
       const newCoords = matchRes.data;
       console.log('🧭 좌표 보정됨:', JSON.stringify(newCoords, null, 2));
 
@@ -183,21 +167,13 @@ const selectRoute = async (start, end, option: roadOptions) => {
         lat: newCoords.goal_lat,
         lng: newCoords.goal_lng,
       };
-    } catch (err: any) {
+    } catch (err) {
       console.error('📛 좌표 보정 실패:', err);
-
-      // 🎯 여기서 상태 코드가 404면 반복 계속 (좌표 못 찾음), 그 외는 종료
-      if (err?.response?.status === 404) {
-        console.warn('⚠️ 좌표 보정 실패 - 계속 반복 시도');
-        continue;
-      } else {
-        console.error('❌ 예기치 못한 오류 - 루프 종료');
-        break;
-      }
+      break;
     }
   }
 
-  console.log('🚨 경로 요청 실패: 도로 위 좌표로 경로를 찾을 수 없습니다.');
+  console.log('경로 요청 실패', '경로를 찾을 수 없습니다. 도로 위 위치를 선택해주세요.');
   return null;
 };
 
@@ -230,7 +206,7 @@ const selectRoute = async (start, end, option: roadOptions) => {
     // 3초 뒤에 자동으로 숨기기
     setTimeout(() => {
       setShowMap(false); // ✅ WebView 숨기기
-    }, 3000);
+    }, 4000);
 
     // 1. 유사도 API 호출
     try {
