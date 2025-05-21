@@ -25,9 +25,9 @@
 | **프론트엔드** | React Native (v0.69) |
 | **네비게이션** | @react-navigation/native-stack |
 | **상태 관리** | @tanstack/react-query |
-| **스타일링** | NativeWind, TailwindCSS |
+| **스타일링** | Style |
 | **데이터 통신** | Axios |
-| **기타** | Safe Area Context, Gesture Handler 등 |
+| **기타** | prettier,eslint 등 |
 
 ---
 
@@ -58,7 +58,7 @@
 - [x] 앱 구조 설계 및 초기 세팅
 - [x] 로그인 및 홈 UI 구현
 - [x] 네비게이션 및 탭 전환 흐름 구성
-- [ ] 실시간 AI 연동 및 위치 기반 알림 처리
+- [ ] 실시간 AI 연동 및 위치 기반 알림 처리 (진행 중)
 - [ ] 웹 대시보드 (CRUD 기능) 구성 예정
 
 ---
