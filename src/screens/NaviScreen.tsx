@@ -1,8 +1,26 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Text, Button, Image, ToastAndroid } from 'react-native';
+import { useCurrentLocation } from '../common/useLocation';
+import Geolocation from 'react-native-geolocation-service';
+import { updateLocation } from '../common/updateLocation';
+import { useQuery } from '@tanstack/react-query';
+import { useRoute } from '@react-navigation/native';
+import axiosInstance from '../api/axiosInstance';
 
 export default function NavigationScreen() {
   const [laneCount, setLaneCount] = useState(4);
+  const [instruction, setInstruction] = useState('');
+  const route = useRoute();
+  const navigationId = route.params?.navigationId ?? 3; // fallback도 넣자
+
+  const fetchGuide = async (id: number) => {
+  const res = await axiosInstance.get(`/crud/user/navigation/guide/${id}`);
+    return res.data.guide;
+  };
+
+  const { data: guideList } = useQuery(['guide', navigationId], () => fetchGuide(navigationId), {
+  enabled: !!navigationId, // navigationId 없으면 안 보내도록
+  });
 
   const updateLaneFromApi = (apiLaneCount) => {
     console.log('Lane 변경됨:', apiLaneCount);
@@ -33,6 +51,29 @@ export default function NavigationScreen() {
     setToastMsg(message);
     setTimeout(() => setToastMsg(''), 20000); // 2초 후 자동 사라짐
   };
+
+  const lastInstructionRef = useRef('');
+
+  useEffect(() => {
+    if (!guideList) return; // 또는 useEffect 내부 조건 체크
+
+    const watchId = Geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude, speed } = pos.coords;
+        const result = updateLocation({ lat: latitude, lng: longitude, speed }, guideList);
+
+        if (result.instruction !== lastInstructionRef.current) {
+          setInstruction(result.instruction);
+          setToastMsg(result.instruction);
+          lastInstructionRef.current = result.instruction;
+        }
+      },
+      (err) => console.warn('GPS 에러:', err),
+      { enableHighAccuracy: true, distanceFilter: 5, interval: 3000 }
+    );
+
+    return () => Geolocation.clearWatch(watchId);
+  }, [guideList]);
 
   return (
     <View style={styles.container}>

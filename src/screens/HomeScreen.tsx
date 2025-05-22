@@ -1,13 +1,21 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Image,ScrollView, TouchableOpacity, Keyboard } from 'react-native';
 import styles from '../styles/theme';
 import { TextInput } from 'react-native-gesture-handler';
 import { TabActions, useNavigation } from '@react-navigation/native';
 import axiosInstance from '../api/axiosInstance';
+import { requestLocationPermission } from '../common/androidPermission';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
   const [destination, setDestination] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      const granted = await requestLocationPermission();
+      console.log('✅ 위치 권한 결과:', granted);
+    })();
+  }, []);
 
   return(
    <ScrollView style={{ backgroundColor: '#373737'}} 

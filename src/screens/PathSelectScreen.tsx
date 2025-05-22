@@ -112,12 +112,13 @@ const trafficColorMap = {
   }
 
   setRoutes(Newroutes); // ✅ 한 번에 상태 업데이트
-  setLoading(false); // ✅ 로딩 종료
+  setLoading(false); // ✅ 로딩 종료---
 };
 
   
  const selectRoute = async (start, end, option: roadOptions) => {
   const attemptRoute = async (startCoords, endCoords) => {
+    console.log("경로 선택됨")
     const payload = {
       start: [parseFloat(startCoords.lat), parseFloat(startCoords.lng)],
       goal: [parseFloat(endCoords.lat), parseFloat(endCoords.lng)],
@@ -128,6 +129,7 @@ const trafficColorMap = {
       const res = await axiosInstance.post(`/navigation/create`, payload, {
         headers: { 'Content-Type': 'application/json' },
       });
+      console.log("/create api 요청")
 
       if (res.status === 200) {
         console.log('🧾 받은 응답:', JSON.stringify(res.data, null, 2));
