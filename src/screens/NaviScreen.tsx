@@ -18,6 +18,19 @@ export default function NavigationScreen() {
     return res.data.guide;
   };
 
+  const fetchPath = async (id: number) => {
+  const res = await axiosInstance.post(
+      `/crud/user/navigation/${id}/preload_path`,
+      { nav_id: id },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return res;
+  };
+
   const { data: guideList } = useQuery(['guide', navigationId], () => fetchGuide(navigationId), {
   enabled: !!navigationId, // navigationId 없으면 안 보내도록
   });
