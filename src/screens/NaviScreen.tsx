@@ -18,7 +18,7 @@ export default function NavigationScreen() {
     return res.data.guide;
   };
 
-  const fetchPath = async (id: number) => {
+  const RegistPathRedis = async (id: number) => {
   const res = await axiosInstance.post(
       `/crud/user/navigation/${id}/preload_path`,
       { nav_id: id },
@@ -31,10 +31,23 @@ export default function NavigationScreen() {
     return res;
   };
 
+  const fetchPath = async (id : number) => {
+    const res = await axiosInstance.get(
+      `/crud/user/navigation/${id}/get_cached_path`
+    )
+
+    return res.data
+  }
+
   const { data: guideList } = useQuery(['guide', navigationId], () => fetchGuide(navigationId), {
   enabled: !!navigationId, // navigationId 없으면 안 보내도록
   });
 
+  const { data: pathList } = useQuery(['path', navigationId], () => fetchPath(navigationId), {
+  enabled: !!navigationId, // navigationId 없으면 안 보내도록
+  });
+
+  //차선 변경 로직
   const updateLaneFromApi = (apiLaneCount) => {
     console.log('Lane 변경됨:', apiLaneCount);
     setLaneCount(apiLaneCount);
@@ -62,18 +75,27 @@ export default function NavigationScreen() {
     setAlerts((prev) => ({ ...prev, [key]: true }));
     // Tts.speak(message);
     setToastMsg(message);
-    setTimeout(() => setToastMsg(''), 20000); // 2초 후 자동 사라짐
+    setTimeout(() => setToastMsg(''), 2000); // 2초 후 자동 사라짐
   };
 
   const lastInstructionRef = useRef('');
 
   useEffect(() => {
+    (async () => {
+    try {
+      await RegistPathRedis(navigationId);
+    } catch (err) {
+      console.warn("🚨 Redis 등록 실패:", err);
+    }
+  })();
+  }, [navigationId]);
+
     if (!guideList) return; // 또는 useEffect 내부 조건 체크
 
     const watchId = Geolocation.watchPosition(
       (pos) => {
         const { latitude, longitude, speed } = pos.coords;
-        const result = updateLocation({ lat: latitude, lng: longitude, speed }, guideList);
+        const result = updateLocation({ lat: latitude, lng: longitude, speed },pathList, guideList);
 
         if (result.instruction !== lastInstructionRef.current) {
           setInstruction(result.instruction);
@@ -86,7 +108,7 @@ export default function NavigationScreen() {
     );
 
     return () => Geolocation.clearWatch(watchId);
-  }, [guideList]);
+  }, [guideList,pathList]);
 
   return (
     <View style={styles.container}>
