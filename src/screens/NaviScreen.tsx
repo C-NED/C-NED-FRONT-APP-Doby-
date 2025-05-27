@@ -156,20 +156,39 @@ export default function NavigationScreen() {
 //     Geolocation.clearWatch(watchId);
 //   };
 // }, [guideList, parsedPath]);
-  useEffect(() => {
-  if (!guideList || !parsedPathList.length) return;
 
-  console.log('parsedPath:', parsedPathList);
+  const interpolate = (start, end, t) => start + (end - start) * t;
+
+  const generateInterpolatedPoints = (startCoords, endCoords, steps = 10) => {
+    const points = [];
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      points.push([
+        interpolate(startCoords[0], endCoords[0], t), // lng
+        interpolate(startCoords[1], endCoords[1], t), // lat
+      ]);
+    }
+    return points;
+  };
+
+  useEffect(() => {
+  if (!guideList || parsedPathList.length < 2) return;
+
+  let currentPathIdx = 0;
+  let subStepIdx = 0;
+  let subSteps = generateInterpolatedPoints(
+    parsedPathList[0].coords,
+    parsedPathList[1].coords,
+    10
+  );
 
   const interval = setInterval(() => {
-    const currentPath = parsedPathList[simIndexRef.current];
-
-    if (!currentPath || !currentPath.coords) {
+    if (currentPathIdx >= parsedPathList.length - 1) {
       clearInterval(interval);
       return;
     }
 
-    const [lng, lat] = currentPath.coords;
+    const [lng, lat] = subSteps[subStepIdx] || [];
 
     if (typeof lat !== 'number' || typeof lng !== 'number') {
       clearInterval(interval);
@@ -194,8 +213,20 @@ export default function NavigationScreen() {
       lastInstructionRef.current = result.instruction;
     }
 
-    simIndexRef.current += 1;
-  }, 3000);
+    subStepIdx++;
+
+    if (subStepIdx >= subSteps.length) {
+      currentPathIdx++;
+      subStepIdx = 0;
+      if (currentPathIdx < parsedPathList.length - 1) {
+        subSteps = generateInterpolatedPoints(
+          parsedPathList[currentPathIdx].coords,
+          parsedPathList[currentPathIdx + 1].coords,
+          10
+        );
+      }
+    }
+  }, 300); // 0.3초마다 1스텝씩 이동
 
   return () => clearInterval(interval);
 }, [guideList, parsedPathList]);
