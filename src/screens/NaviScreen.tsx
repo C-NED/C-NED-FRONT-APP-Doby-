@@ -67,6 +67,8 @@ export default function NavigationScreen() {
     3: [15, 50, 85],
     4: [15, 35, 65, 85],
   };
+
+  const { arrow, landmark } = parseInstructionForHUD(instruction);
   
   const lanePositions = fixedLanePositions[laneCount] || [50];
   
@@ -239,11 +241,11 @@ export default function NavigationScreen() {
     <View style={styles.container}>
         {/* 중앙 토스트 */}
       {toastMsg !== '' && (
-        <View style={styles.toast}>
-          <Text style={styles.arrowIcon}>{parseInstructionForHUD(instruction).arrow}</Text>
-          <Text style={styles.toastText}>{parseInstructionForHUD(instruction).landmark}</Text>
-        </View>
-      )}
+      <View style={styles.toast}>
+        <Image style={styles.arrowIcon} source={arrow} resizeMode="contain" />
+        <Text style={styles.toastText}>{landmark}</Text>
+      </View>
+    )}
       <View style={styles.topIcons}>
         <Image source={alerts.outbreak ? require('../styles/icons/outbreak_blue.png') : require('../styles/icons/outbreak.png')} style={{height:60,width:60}} />
         <Image source={alerts.vsl ? require('../styles/icons/vsl_red.png') : require('../styles/icons/vsl.png')} style={{height:60,width:60}} />
@@ -345,7 +347,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     zIndex: 999,
-    scaleX: -1
   },
   toastText: {
     color: 'white',
@@ -362,9 +363,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
   },
   arrowIcon: {
-  fontSize: 150,
+  width:150,
+  height: 150,
   marginBottom: 10,
   color: 'white',
-  scaleX: -1, // 화살표만 다시 뒤집기
 },
 });
