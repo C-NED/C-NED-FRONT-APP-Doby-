@@ -8,15 +8,18 @@ export const updateLocation = (current, pathFromRedis, guideList) => {
   const { lat, lng, speed } = current;
 
   // 1. 속도 계산
-  let calculatedSpeed = speed;
-  if ((!speed || speed === 0) && prevCoords && prevTime) {
+  // AFTER
+  let calculatedSpeed = 0;
+  if (prevCoords && prevTime) {
     const distance = haversine(prevCoords, { latitude: lat, longitude: lng });
     const timeDiff = (now - prevTime) / 1000;
     calculatedSpeed = distance / timeDiff;
   }
 
+  // 현재 위치 저장
   prevCoords = { latitude: lat, longitude: lng };
   prevTime = now;
+
 
   // 2. path에서 가장 가까운 지점 탐색
   let minDist = Infinity;
