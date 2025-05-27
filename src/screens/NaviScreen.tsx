@@ -12,6 +12,7 @@ import { parseInstructionForHUD } from '../common/parseInstructionForHUD';
 export default function NavigationScreen() {
   const [laneCount, setLaneCount] = useState(4);
   const [instruction, setInstruction] = useState('');
+  const [currentSpeed, setCurrentSpeed] = useState(0);
   const simIndexRef = useRef(0);
   const testGPSRef = useRef({
   lat: 37.4979521,
@@ -106,61 +107,7 @@ export default function NavigationScreen() {
       .filter(Boolean); // 좌표 파싱 실패 제거
   }, [pathList]);
 
-
-
-  useEffect(() => {
-  (async () => {
-    try {
-      await RegistPathRedis(navigationId);
-    } catch (err) {
-      console.warn("🚨 Redis 등록 실패:", err);
-    }
-  })();
-}, [navigationId]);
-
-// useEffect(() => {
-//   if (!guideList || !pathList) return;
-//   // console.log("✅ pathList:", pathList);
-
-//   const interval = setInterval(() => {
-//   const [lng, lat] = parsedPath[simIndexRef.current] || [];
-//   if (!lat || !lng) {
-//     clearInterval(interval);
-//     return;
-//   }
-
-//   testGPSRef.current = { lat, lng, speed: 3 };
-
-//   simIndexRef.current += 1;
-// }, 3000);
-
-//   const watchId = Geolocation.watchPosition(
-//     (pos) => {
-//       // console.log("📡 실시간 GPS 확인:", pos)
-//       console.log("📡 실시간 GPS 확인:", testGPSRef.current,);
-//       const { latitude, longitude, speed } = pos.coords;
-//       const result = updateLocation(
-//         testGPSRef.current, // testGPS로 대체
-//         parsedPath,
-//         guideList
-//       );
-
-//       if (result.instruction !== lastInstructionRef.current) {
-//         setInstruction(result.instruction);
-//         setToastMsg(result.instruction);
-//         lastInstructionRef.current = result.instruction;
-//       }
-//     },
-//     (err) => console.warn("GPS 에러:", err),
-//     { enableHighAccuracy: true, distanceFilter: 5, interval: 3000 }
-//   );
-
-//   return () => {
-//     Geolocation.clearWatch(watchId);
-//   };
-// }, [guideList, parsedPath]);
-
-  const interpolate = (start, end, t) => start + (end - start) * t;
+    const interpolate = (start, end, t) => start + (end - start) * t;
 
   const generateInterpolatedPoints = (startCoords, endCoords, steps = 10) => {
     const points = [];
@@ -173,7 +120,64 @@ export default function NavigationScreen() {
     }
     return points;
   };
+  
 
+  useEffect(() => {
+  (async () => {
+    try {
+      await RegistPathRedis(navigationId);
+    } catch (err) {
+      console.warn("🚨 Redis 등록 실패:", err);
+    }
+  })();
+}, [navigationId]);
+
+
+// 실시간 gps 방식
+// useEffect(() => {
+//   if (!guideList || parsedPathList.length < 2) return;
+
+//   const watchId = Geolocation.watchPosition(
+//     (pos) => {
+//       const { latitude, longitude, speed } = pos.coords;
+//       const newGPS = {
+//         lat: latitude,
+//         lng: longitude,
+//         speed: speed ?? 0,
+//       };
+//       testGPSRef.current = newGPS;
+
+//       const result = updateLocation(newGPS, parsedPathList, guideList);
+//       setCurrentSpeed(result.speed); // 화면 표시용 속도
+
+//       if (result.instruction !== lastInstructionRef.current) {
+//         lastInstructionRef.current = result.instruction;
+//         const { arrow, landmark } = parseInstructionForHUD(result.instruction);
+//         setInstruction(result.instruction);
+//         setToastMsg(`${arrow} ${landmark}`);
+//       }
+
+//       console.log("📡 실시간 GPS:", newGPS);
+//       console.log("➡️ 안내:", result.instruction);
+//     },
+//     (err) => {
+//       console.warn("📡 GPS 에러:", err);
+//     },
+//     {
+//       enableHighAccuracy: true,
+//       distanceFilter: 5,
+//       interval: 1000,
+//       fastestInterval: 500,
+//     }
+//   );
+
+//   return () => {
+//     Geolocation.clearWatch(watchId);
+//   };
+// }, [guideList, parsedPathList]);
+
+
+// 시뮬레이션 gps 방식
   useEffect(() => {
   if (!guideList || parsedPathList.length < 2) return;
 
@@ -198,7 +202,7 @@ export default function NavigationScreen() {
       return;
     }
 
-    const newGPS = { lat, lng, speed: 3 };
+    const newGPS = { lat, lng, speed: 0 };
     testGPSRef.current = newGPS;
 
     const result = updateLocation(
@@ -206,6 +210,8 @@ export default function NavigationScreen() {
       parsedPathList,
       guideList
     );
+
+    setCurrentSpeed(result.speed);
 
     console.log("📡 시뮬 GPS:", newGPS);
     console.log("➡️ 안내:", result.instruction);
@@ -269,7 +275,29 @@ export default function NavigationScreen() {
 
       <View style={styles.bottomIcons}>
         <Image source={alerts.aic?require('../styles/icons/ai_danger_purple.png'):require('../styles/icons/ai_danger.png')} style={{height:120,width:120}} />
-        <Image source={require('../styles/icons/speed.png')} style={{height:120,width:120}} />
+        <View style={{ width: 200, height: 120, position: 'relative' }}>
+          <Image
+            source={require('../styles/icons/speed.png')}
+            style={{
+              width: 140,
+              height: 140,
+              position: 'absolute',
+              left: 40,
+            }}
+          />
+          <Text style={{
+            position: 'absolute',
+            top: 20,
+            left: 0,
+            width: 200,
+            textAlign: 'center',
+            color: 'yellow',
+            fontSize: 70,
+            fontWeight: 'bold',
+          }}>
+            {(currentSpeed * 3.6).toFixed(1)}
+          </Text>
+        </View>
       </View>
 
       {/* <View style={styles.buttonArea}>
