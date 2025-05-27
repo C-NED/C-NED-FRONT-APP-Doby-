@@ -88,12 +88,21 @@ export default function NavigationScreen() {
 
   const lastInstructionRef = useRef('');
 
-  const parsedPath = useMemo(() => {
-  if (!pathList) return [];
+  const parsedPathList = useMemo(() => {
+    if (!pathList) return [];
+
     return pathList
-      .map(p => parseWKT(p.point))
-      .filter(Boolean);
-    }, [pathList]);
+      .map((p) => {
+        const coords = parseWKT(p.point); // [lng, lat]
+        if (!coords) return null;
+        return {
+          ...p,
+          coords, // 좌표 추가됨
+        };
+      })
+      .filter(Boolean); // 좌표 파싱 실패 제거
+  }, [pathList]);
+
 
 
   useEffect(() => {
@@ -148,38 +157,48 @@ export default function NavigationScreen() {
 //   };
 // }, [guideList, parsedPath]);
   useEffect(() => {
-    if (!guideList || !parsedPath.length) return;
+  if (!guideList || !parsedPathList.length) return;
 
-    const interval = setInterval(() => {
-      const [lng, lat] = parsedPath[simIndexRef.current] || [];
-      if (!lat || !lng) {
-        clearInterval(interval);
-        return;
-      }
+  console.log('parsedPath:', parsedPathList);
 
-      const newGPS = { lat, lng, speed: 3 };
-      testGPSRef.current = newGPS;
+  const interval = setInterval(() => {
+    const currentPath = parsedPathList[simIndexRef.current];
 
-      const result = updateLocation(
-        newGPS,
-        parsedPath,
-        guideList
-      );
+    if (!currentPath || !currentPath.coords) {
+      clearInterval(interval);
+      return;
+    }
 
-      console.log("📡 시뮬 GPS:", newGPS);
-      console.log("➡️ 안내:", result.instruction);
+    const [lng, lat] = currentPath.coords;
 
-      if (result.instruction !== lastInstructionRef.current) {
-        setInstruction(result.instruction);
-        setToastMsg(result.instruction);
-        lastInstructionRef.current = result.instruction;
-      }
+    if (typeof lat !== 'number' || typeof lng !== 'number') {
+      clearInterval(interval);
+      return;
+    }
 
-      simIndexRef.current += 1;
-    }, 3000);
+    const newGPS = { lat, lng, speed: 3 };
+    testGPSRef.current = newGPS;
 
-    return () => clearInterval(interval);
-  }, [guideList, parsedPath]);
+    const result = updateLocation(
+      newGPS,
+      parsedPathList,
+      guideList
+    );
+
+    console.log("📡 시뮬 GPS:", newGPS);
+    console.log("➡️ 안내:", result.instruction);
+
+    if (result.instruction !== lastInstructionRef.current) {
+      setInstruction(result.instruction);
+      setToastMsg(result.instruction);
+      lastInstructionRef.current = result.instruction;
+    }
+
+    simIndexRef.current += 1;
+  }, 3000);
+
+  return () => clearInterval(interval);
+}, [guideList, parsedPathList]);
 
 
   return (

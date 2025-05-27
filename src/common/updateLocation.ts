@@ -7,7 +7,7 @@ export const updateLocation = (current, pathFromRedis, guideList) => {
   const now = Date.now();
   const { lat, lng, speed } = current;
 
-  // 1. 속도 계산 (fallback 포함)
+  // 1. 속도 계산
   let calculatedSpeed = speed;
   if ((!speed || speed === 0) && prevCoords && prevTime) {
     const distance = haversine(prevCoords, { latitude: lat, longitude: lng });
@@ -18,12 +18,17 @@ export const updateLocation = (current, pathFromRedis, guideList) => {
   prevCoords = { latitude: lat, longitude: lng };
   prevTime = now;
 
-  // 2. path에서 가장 가까운 pointIndex 탐색
+  // 2. path에서 가장 가까운 지점 탐색
   let minDist = Infinity;
   let closestIdx = 0;
 
-  pathFromRedis.forEach(([lngP, latP], idx) => {
-    const dist = haversine({ latitude: lat, longitude: lng }, { latitude: latP, longitude: lngP });
+  pathFromRedis.forEach((p, idx) => {
+    const [lngP, latP] = p.coords;
+    const dist = haversine(
+      { latitude: lat, longitude: lng },
+      { latitude: latP, longitude: lngP }
+    );
+
     if (dist < minDist) {
       minDist = dist;
       closestIdx = idx;
@@ -41,14 +46,23 @@ export const updateLocation = (current, pathFromRedis, guideList) => {
     };
   }
 
-  // 3. 해당 pointIndex에 대응하는 guide 찾기
-  const guide = guideList.find(g => g.pointIndex === closestIdx);
-  const nextStep = guideList.find(g => g.pointIndex === closestIdx + 1);
-  const instruction =(minDist < 30 && !nextStep) ? '목적지에 도착했습니다.' : (nextStep?.instructions ?? '');
+  // 3. 도착 판정: path의 마지막 index 기준
+  const isArrived = minDist < 30 && closestIdx >= pathFromRedis.length - 1;
 
-  // 4. 디버깅 출력
+  // 4. 안내 정보 찾기
+  const matchedPath = pathFromRedis[closestIdx];
+  const pathidx = matchedPath.pathidx;
+
+  const guide = guideList.find(g => g.pointidx === pathidx);
+  const nextStep = guideList.find(g => g.pointidx === pathidx + 1);
+
+  const instruction = isArrived
+    ? '목적지에 도착했습니다.'
+    : (nextStep?.instructions || guide?.instructions || '');
+
+  // 5. 디버깅 출력
   console.log(`📍 현재 위치: ${lat}, ${lng}`);
-  console.log(`🧭 가장 가까운 path: ${pathFromRedis[closestIdx][1]}, ${pathFromRedis[closestIdx][0]} (idx: ${closestIdx})`);
+  console.log(`🧭 가장 가까운 path: ${matchedPath.coords[1]}, ${matchedPath.coords[0]} (pathidx: ${pathidx})`);
   console.log(`🚗 계산 속도: ${calculatedSpeed?.toFixed(2)} m/s`);
   console.log(`➡️ 다음 안내: ${instruction} (${Math.round(minDist)}m 앞)`);
 
