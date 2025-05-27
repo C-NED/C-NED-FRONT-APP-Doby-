@@ -30,10 +30,21 @@ export const updateLocation = (current, pathFromRedis, guideList) => {
     }
   });
 
+  if (minDist > 1000) {
+    console.warn("🚨 현재 위치가 경로와 너무 멉니다. 무시 처리됨");
+    return {
+      instruction: "위치를 확인해주세요",
+      speed: calculatedSpeed,
+      distanceToNext: minDist,
+      closestPathIndex: closestIdx,
+      matchedGuide: null
+    };
+  }
+
   // 3. 해당 pointIndex에 대응하는 guide 찾기
   const guide = guideList.find(g => g.pointIndex === closestIdx);
   const nextStep = guideList.find(g => g.pointIndex === closestIdx + 1);
-  const instruction = nextStep?.instructions ?? '목적지에 도착했습니다.';
+  const instruction =(minDist < 30 && !nextStep) ? '목적지에 도착했습니다.' : (nextStep?.instructions ?? '');
 
   // 4. 디버깅 출력
   console.log(`📍 현재 위치: ${lat}, ${lng}`);

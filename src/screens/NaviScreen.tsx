@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, Text, Button, Image, ToastAndroid } from 'react-native';
 import { useCurrentLocation } from '../common/useLocation';
 import Geolocation from 'react-native-geolocation-service';
@@ -6,10 +6,18 @@ import { updateLocation } from '../common/updateLocation';
 import { useQuery } from '@tanstack/react-query';
 import { useRoute } from '@react-navigation/native';
 import axiosInstance from '../api/axiosInstance';
+import { parseWKT } from '../common/parseWTK';
 
 export default function NavigationScreen() {
   const [laneCount, setLaneCount] = useState(4);
   const [instruction, setInstruction] = useState('');
+  const simIndexRef = useRef(0);
+  const testGPSRef = useRef({
+  lat: 37.4979521,
+  lng: 127.0276242,
+  speed: 3,
+  });
+
   const route = useRoute();
   const navigationId = route.params?.navigationId ?? 3; // fallback도 넣자
 
@@ -80,35 +88,99 @@ export default function NavigationScreen() {
 
   const lastInstructionRef = useRef('');
 
+  const parsedPath = useMemo(() => {
+  if (!pathList) return [];
+    return pathList
+      .map(p => parseWKT(p.point))
+      .filter(Boolean);
+    }, [pathList]);
+
+
   useEffect(() => {
-    (async () => {
+  (async () => {
     try {
       await RegistPathRedis(navigationId);
     } catch (err) {
       console.warn("🚨 Redis 등록 실패:", err);
     }
   })();
-  }, [navigationId]);
+}, [navigationId]);
 
-    if (!guideList) return; // 또는 useEffect 내부 조건 체크
+// useEffect(() => {
+//   if (!guideList || !pathList) return;
+//   // console.log("✅ pathList:", pathList);
 
-    const watchId = Geolocation.watchPosition(
-      (pos) => {
-        const { latitude, longitude, speed } = pos.coords;
-        const result = updateLocation({ lat: latitude, lng: longitude, speed },pathList, guideList);
+//   const interval = setInterval(() => {
+//   const [lng, lat] = parsedPath[simIndexRef.current] || [];
+//   if (!lat || !lng) {
+//     clearInterval(interval);
+//     return;
+//   }
 
-        if (result.instruction !== lastInstructionRef.current) {
-          setInstruction(result.instruction);
-          setToastMsg(result.instruction);
-          lastInstructionRef.current = result.instruction;
-        }
-      },
-      (err) => console.warn('GPS 에러:', err),
-      { enableHighAccuracy: true, distanceFilter: 5, interval: 3000 }
-    );
+//   testGPSRef.current = { lat, lng, speed: 3 };
 
-    return () => Geolocation.clearWatch(watchId);
-  }, [guideList,pathList]);
+//   simIndexRef.current += 1;
+// }, 3000);
+
+//   const watchId = Geolocation.watchPosition(
+//     (pos) => {
+//       // console.log("📡 실시간 GPS 확인:", pos)
+//       console.log("📡 실시간 GPS 확인:", testGPSRef.current,);
+//       const { latitude, longitude, speed } = pos.coords;
+//       const result = updateLocation(
+//         testGPSRef.current, // testGPS로 대체
+//         parsedPath,
+//         guideList
+//       );
+
+//       if (result.instruction !== lastInstructionRef.current) {
+//         setInstruction(result.instruction);
+//         setToastMsg(result.instruction);
+//         lastInstructionRef.current = result.instruction;
+//       }
+//     },
+//     (err) => console.warn("GPS 에러:", err),
+//     { enableHighAccuracy: true, distanceFilter: 5, interval: 3000 }
+//   );
+
+//   return () => {
+//     Geolocation.clearWatch(watchId);
+//   };
+// }, [guideList, parsedPath]);
+  useEffect(() => {
+    if (!guideList || !parsedPath.length) return;
+
+    const interval = setInterval(() => {
+      const [lng, lat] = parsedPath[simIndexRef.current] || [];
+      if (!lat || !lng) {
+        clearInterval(interval);
+        return;
+      }
+
+      const newGPS = { lat, lng, speed: 3 };
+      testGPSRef.current = newGPS;
+
+      const result = updateLocation(
+        newGPS,
+        parsedPath,
+        guideList
+      );
+
+      console.log("📡 시뮬 GPS:", newGPS);
+      console.log("➡️ 안내:", result.instruction);
+
+      if (result.instruction !== lastInstructionRef.current) {
+        setInstruction(result.instruction);
+        setToastMsg(result.instruction);
+        lastInstructionRef.current = result.instruction;
+      }
+
+      simIndexRef.current += 1;
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [guideList, parsedPath]);
+
 
   return (
     <View style={styles.container}>
