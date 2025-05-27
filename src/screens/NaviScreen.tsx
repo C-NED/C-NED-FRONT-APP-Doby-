@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useRoute } from '@react-navigation/native';
 import axiosInstance from '../api/axiosInstance';
 import { parseWKT } from '../common/parseWTK';
+import { parseInstructionForHUD } from '../common/parseInstructionForHUD';
 
 export default function NavigationScreen() {
   const [laneCount, setLaneCount] = useState(4);
@@ -15,7 +16,7 @@ export default function NavigationScreen() {
   const testGPSRef = useRef({
   lat: 37.4979521,
   lng: 127.0276242,
-  speed: 3,
+  speed: 0,
   });
 
   const route = useRoute();
@@ -208,9 +209,11 @@ export default function NavigationScreen() {
     console.log("➡️ 안내:", result.instruction);
 
     if (result.instruction !== lastInstructionRef.current) {
-      setInstruction(result.instruction);
-      setToastMsg(result.instruction);
-      lastInstructionRef.current = result.instruction;
+    lastInstructionRef.current = result.instruction;
+    
+    const { arrow, landmark } = parseInstructionForHUD(result.instruction);
+    setInstruction(result.instruction);
+    setToastMsg(`${arrow} ${landmark}`);
     }
 
     subStepIdx++;
@@ -237,7 +240,8 @@ export default function NavigationScreen() {
         {/* 중앙 토스트 */}
       {toastMsg !== '' && (
         <View style={styles.toast}>
-          <Text style={styles.toastText}>{toastMsg}</Text>
+          <Text style={styles.arrowIcon}>{parseInstructionForHUD(instruction).arrow}</Text>
+          <Text style={styles.toastText}>{parseInstructionForHUD(instruction).landmark}</Text>
         </View>
       )}
       <View style={styles.topIcons}>
@@ -357,4 +361,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
   },
+  arrowIcon: {
+  fontSize: 150,
+  marginBottom: 10,
+  color: 'white',
+  scaleX: -1, // 화살표만 다시 뒤집기
+},
 });

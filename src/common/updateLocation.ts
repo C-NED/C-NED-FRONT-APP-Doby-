@@ -35,16 +35,16 @@ export const updateLocation = (current, pathFromRedis, guideList) => {
     }
   });
 
-  if (minDist > 1000) {
-    console.warn("🚨 현재 위치가 경로와 너무 멉니다. 무시 처리됨");
-    return {
-      instruction: "위치를 확인해주세요",
-      speed: calculatedSpeed,
-      distanceToNext: minDist,
-      closestPathIndex: closestIdx,
-      matchedGuide: null
-    };
-  }
+  // if (minDist > 1000) {
+  //   console.warn("🚨 현재 위치가 경로와 너무 멉니다. 무시 처리됨");
+  //   return {
+  //     instruction: "위치를 확인해주세요",
+  //     speed: calculatedSpeed,
+  //     distanceToNext: minDist,
+  //     closestPathIndex: closestIdx,
+  //     matchedGuide: null
+  //   };
+  // }
 
   // 3. 도착 판정: path의 마지막 index 기준
   const isArrived = minDist < 30 && closestIdx >= pathFromRedis.length - 1;
