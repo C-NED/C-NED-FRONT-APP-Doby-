@@ -4,7 +4,7 @@ import { useCurrentLocation } from '../common/useLocation';
 import Geolocation from 'react-native-geolocation-service';
 import { updateLocation } from '../common/updateLocation';
 import { useQuery } from '@tanstack/react-query';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import axiosInstance from '../api/axiosInstance';
 import { parseWKT } from '../common/parseWTK';
 import { parseInstructionForHUD } from '../common/parseInstructionForHUD';
@@ -18,6 +18,8 @@ export default function NavigationScreen() {
   const [arrow, setArrow] = useState<string | ImageSourcePropType>('');
   const [landmark,setLandmark] = useState('')
   const simIndexRef = useRef(0);
+  const navigator = useNavigation();
+  
   const testGPSRef = useRef({
   lat: 37.4979521,
   lng: 127.0276242,
@@ -296,6 +298,11 @@ useEffect(() => {
   const interval = setInterval(() => {
     if (currentPathIdx >= parsedPathList.length - 1) {
       clearInterval(interval);
+
+      
+      // ✅ 시뮬레이션 종료 후 메인으로 이동
+      navigator.navigate('Main');
+
       return;
     }
 
