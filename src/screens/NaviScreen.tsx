@@ -11,7 +11,7 @@ import { parseInstructionForHUD } from '../common/parseInstructionForHUD';
 import type { ImageSourcePropType } from 'react-native';
 
 export default function NavigationScreen() {
-  const [laneCount, setLaneCount] = useState(4);
+  const [laneCount, setLaneCount] = useState(2);
   const [instruction, setInstruction] = useState('');
   const [currentSpeed, setCurrentSpeed] = useState(0);
   const [nextdistance, setNextDistance] = useState(0);
@@ -32,9 +32,9 @@ export default function NavigationScreen() {
     return res.data.guide;
   };
 
-  const RegistPathRedis = async (id: number) => {
+  const RegistDataRedis = async (id: number) => {
   const res = await axiosInstance.post(
-      `/crud/user/navigation/${id}/preload_path`,
+      `/crud/user/navigation/${id}/preload_all`,
       { nav_id: id },
       {
         headers: {
@@ -45,9 +45,9 @@ export default function NavigationScreen() {
     return res;
   };
 
-  const fetchPath = async (id : number) => {
+  const fetchData = async (id : number) => {
     const res = await axiosInstance.get(
-      `/crud/user/navigation/${id}/get_cached_path`
+      `/crud/user/navigation/${id}/get_cached_all`
     )
 
     return res.data
@@ -57,9 +57,13 @@ export default function NavigationScreen() {
   enabled: !!navigationId, // navigationId 없으면 안 보내도록
   });
 
-  const { data: pathList } = useQuery(['path', navigationId], () => fetchPath(navigationId), {
-  enabled: !!navigationId, // navigationId 없으면 안 보내도록
-  });
+ const { data, isLoading } = useQuery(['navigation-all', navigationId], () => fetchData(navigationId), {
+  enabled: !!navigationId,
+});
+
+  const alertList = data?.alerts ?? [];
+  const pathList = data?.path ?? [];
+  const laneList = data?.lane ?? [];
 
   //차선 변경 로직
   const updateLaneFromApi = (apiLaneCount) => {
@@ -129,7 +133,7 @@ export default function NavigationScreen() {
   useEffect(() => {
   (async () => {
     try {
-      await RegistPathRedis(navigationId);
+      await RegistDataRedis(navigationId);
     } catch (err) {
       console.warn("🚨 Redis 등록 실패:", err);
     }
@@ -184,6 +188,8 @@ export default function NavigationScreen() {
 // 시뮬레이션 gps 방식
 useEffect(() => {
   if (!guideList || parsedPathList.length < 2) return;
+  console.log("laneList :",laneList)
+  console.log("Alerts : ",alertList)
 
   let currentPathIdx = 0;
   let subStepIdx = 0;
@@ -212,7 +218,8 @@ useEffect(() => {
     const result = updateLocation(
       newGPS,
       parsedPathList,
-      guideList
+      guideList,
+      laneList
     );
 
     setCurrentSpeed(result.speed);
@@ -232,6 +239,7 @@ useEffect(() => {
       setToastMsg(`${arrow} ${landmark}`);
       setArrow(arrow)
       setLandmark(landmark)
+      setLaneCount(result.laneCount)
     }
 
     subStepIdx++;

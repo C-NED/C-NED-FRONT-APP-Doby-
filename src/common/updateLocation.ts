@@ -3,7 +3,7 @@ import haversine = require('haversine-distance');
 let prevCoords = null;
 let prevTime = null;
 
-export const updateLocation = (current, pathFromRedis, guideList) => {
+export const updateLocation = (current, pathFromRedis, guideList,laneList) => {
   const now = Date.now();
   const { lat, lng, speed } = current;
 
@@ -65,11 +65,16 @@ export const updateLocation = (current, pathFromRedis, guideList) => {
 
   const nextdistance = Math.round(minDist)
 
+    // 👇 laneCount 찾아내기
+  const laneInfo = laneList?.find(l => l.pointidx === pathidx);
+  const laneCount = laneInfo?.lane_count ?? 4; // 기본 4차선
+
   // 5. 디버깅 출력
   console.log(`📍 현재 위치: ${lat}, ${lng}`);
   console.log(`🧭 가장 가까운 path: ${matchedPath.coords[1]}, ${matchedPath.coords[0]} (pathidx: ${pathidx})`);
   console.log(`🚗 계산 속도: ${calculatedSpeed?.toFixed(2)} m/s`);
   console.log(`➡️ 다음 안내: ${instruction} (${nextdistance}m 앞)`);
+  console.log(`${laneCount} 차선입니다.`)
 
   return {
     speed: calculatedSpeed,
@@ -77,6 +82,7 @@ export const updateLocation = (current, pathFromRedis, guideList) => {
     instruction,
     closestPathIndex: closestIdx,
     matchedGuide: guide,
-    nextdistance
-  };
+    nextdistance,
+    laneCount
+    };
 };
