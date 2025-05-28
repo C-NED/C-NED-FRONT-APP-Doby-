@@ -24,6 +24,84 @@ export default function NavigationScreen() {
   speed: 0,
   });
 
+  //testalert data
+  const testAlertDate = {
+  "outbreak": [
+    {
+      "event_type": "화재",
+      "period": "20250528080000Y",
+      "message": "인근 지역 화재 발생",
+      "loc": "POINT(37.5034164 127.0209654)"
+    },
+    {
+      "event_type": "폭우",
+      "period": "20250528091500Y",
+      "message": "급격한 폭우 주의",
+      "loc": "POINT(37.5017221 126.9819567)"
+    },
+    {
+      "event_type": "낙석",
+      "period": "20250528103000Y",
+      "message": "낙석 발생 구간 주의",
+      "loc": "POINT(37.5327478 126.9093956)"
+    }
+  ],
+  "vsl": [
+    {
+      "loc": "POINT(37.5034612 127.0211213)",
+      "default_speed_limit": 80,
+      "cur_speed_limit": 60
+    },
+    {
+      "loc": "POINT(37.5342579 126.9065993)",
+      "default_speed_limit": 100,
+      "cur_speed_limit": 80
+    },
+    {
+      "loc": "POINT(37.5362641 126.9028052)",
+      "default_speed_limit": 90,
+      "cur_speed_limit": 70
+    }
+  ],
+  "dincident": [
+    {
+      "loc": "POINT(37.4966366 127.028197)",
+      "period": "20250528083000Y"
+    },
+    {
+      "loc": "POINT(37.5032042 127.006209)",
+      "period": "20250528104500Y"
+    },
+    {
+      "loc": "POINT(37.4982023 126.9902429)",
+      "period": "20250528120000Y"
+    },
+    {
+      "loc": "POINT(37.501601 126.9822856)",
+      "period": "20250528131500Y"
+    },
+    {
+      "loc": "POINT(37.5348582 126.9058872)",
+      "period": "20250528143000Y"
+    }
+  ],
+  "caution": [
+    {
+      "message": "노면 결빙 주의",
+      "loc": "POINT(37.4981954 126.9905303)"
+    },
+    {
+      "message": "어린이 보호구역입니다",
+      "loc": "POINT(37.5032533 127.0212143)"
+    },
+    {
+      "message": "공사 구간입니다",
+      "loc": "POINT(37.5303174 126.9102398)"
+    }
+  ]
+}
+
+
   const route = useRoute();
   const navigationId = route.params?.navigationId ?? 3; // fallback도 넣자
 
@@ -61,15 +139,10 @@ export default function NavigationScreen() {
   enabled: !!navigationId,
 });
 
-  const alertList = data?.alerts ?? [];
+  const alertList = testAlertDate;
+  // const alertList = testAlertDate ?? [];
   const pathList = data?.path ?? [];
   const laneList = data?.lane ?? [];
-
-  //차선 변경 로직
-  const updateLaneFromApi = (apiLaneCount) => {
-    console.log('Lane 변경됨:', apiLaneCount);
-    setLaneCount(apiLaneCount);
-  };
 
   const fixedLanePositions = {
     2: [15, 85],
@@ -78,25 +151,46 @@ export default function NavigationScreen() {
   };
 
   // const { arrow, landmark } = parseInstructionForHUD(instruction,nextdistance);
+
+  // 상단에서 1회만 실행
+const flatAlerts = useMemo(() => {
+  const alerts = [];
+  for (const [type, items] of Object.entries(alertList || {})) {
+    for (const item of items) {
+      const coords = parseWKT(item.loc); // "POINT(x y)" → [x, y]
+      alerts.push({ ...item, coords, type });
+    }
+  }
+  return alerts;
+}, [alertList]);
+
   
   const lanePositions = fixedLanePositions[laneCount] || [50];
   
-  const [alerts, setAlerts] = useState({
-    outbreak: true,
-    vsl: true,
-    dinc: true,
-    caution: true,
-    aic:true
+  const alertStateRef = useRef({
+    outbreak: false,
+    vsl: false,
+    dinc: false,
+    caution: false,
+    aic: false
   });
 
+  // state: UI에 반영되도록 사용 (렌더링 트리거 O)
+  const [alerts, setAlerts] = useState({ ...alertStateRef.current });
+
   const [toastMsg, setToastMsg] = useState('');
-  
+
   const handleAlert = (key, message) => {
-    setAlerts((prev) => ({ ...prev, [key]: true }));
-    // Tts.speak(message);
-    setToastMsg(message);
-    setTimeout(() => setToastMsg(''), 2000); // 2초 후 자동 사라짐
-  };
+  // 중복 알림이면 무시
+  if (alertStateRef.current[key]) return;
+
+  alertStateRef.current[key] = true;
+  setAlerts({ ...alertStateRef.current }); // UI 반영
+
+  setToastMsg(message);
+  setTimeout(() => setToastMsg(''), 2000); // HUD 2초 표시
+};
+
 
   const lastInstructionRef = useRef('');
 
@@ -189,7 +283,7 @@ export default function NavigationScreen() {
 useEffect(() => {
   if (!guideList || parsedPathList.length < 2) return;
   console.log("laneList :",laneList)
-  console.log("Alerts : ",alertList)
+  console.log("Alerts : ",flatAlerts)
 
   let currentPathIdx = 0;
   let subStepIdx = 0;
@@ -219,7 +313,8 @@ useEffect(() => {
       newGPS,
       parsedPathList,
       guideList,
-      laneList
+      laneList,
+      flatAlerts
     );
 
     setCurrentSpeed(result.speed);
@@ -234,6 +329,13 @@ useEffect(() => {
         result.instruction,
         result.nextdistance ?? 0 // 🧩 여기서 거리 전달
       );
+
+    if (result.triggeredAlerts.length > 0) {
+        result.triggeredAlerts.forEach(({ key, message }) => {
+          handleAlert(key, message);
+        });
+      }
+
 
       setInstruction(result.instruction);
       setToastMsg(`${arrow} ${landmark}`);
