@@ -35,10 +35,14 @@ export const extractLandmark = (text: string): string => {
 };
 
 export const parseInstructionForHUD = (
-  instruction: string
+  instruction: string,
+  nextdistance: number
 ): { arrow: ImageSourcePropType | string; landmark: string } => {
+  const rawLandmark = extractLandmark(instruction);
+  const distancePrefix = nextdistance > 0 ? `${Math.round(nextdistance)}m 앞 ` : "";
   return {
     arrow: getDirectionSymbol(instruction),
-    landmark: extractLandmark(instruction),
+    landmark: `${distancePrefix}${rawLandmark}`,
   };
 };
+

@@ -8,11 +8,15 @@ import { useRoute } from '@react-navigation/native';
 import axiosInstance from '../api/axiosInstance';
 import { parseWKT } from '../common/parseWTK';
 import { parseInstructionForHUD } from '../common/parseInstructionForHUD';
+import type { ImageSourcePropType } from 'react-native';
 
 export default function NavigationScreen() {
   const [laneCount, setLaneCount] = useState(4);
   const [instruction, setInstruction] = useState('');
   const [currentSpeed, setCurrentSpeed] = useState(0);
+  const [nextdistance, setNextDistance] = useState(0);
+  const [arrow, setArrow] = useState<string | ImageSourcePropType>('');
+  const [landmark,setLandmark] = useState('')
   const simIndexRef = useRef(0);
   const testGPSRef = useRef({
   lat: 37.4979521,
@@ -69,7 +73,7 @@ export default function NavigationScreen() {
     4: [15, 35, 65, 85],
   };
 
-  const { arrow, landmark } = parseInstructionForHUD(instruction);
+  // const { arrow, landmark } = parseInstructionForHUD(instruction,nextdistance);
   
   const lanePositions = fixedLanePositions[laneCount] || [50];
   
@@ -107,7 +111,7 @@ export default function NavigationScreen() {
       .filter(Boolean); // 좌표 파싱 실패 제거
   }, [pathList]);
 
-    const interpolate = (start, end, t) => start + (end - start) * t;
+  const interpolate = (start, end, t) => start + (end - start) * t;
 
   const generateInterpolatedPoints = (startCoords, endCoords, steps = 10) => {
     const points = [];
@@ -178,7 +182,7 @@ export default function NavigationScreen() {
 
 
 // 시뮬레이션 gps 방식
-  useEffect(() => {
+useEffect(() => {
   if (!guideList || parsedPathList.length < 2) return;
 
   let currentPathIdx = 0;
@@ -217,11 +221,17 @@ export default function NavigationScreen() {
     console.log("➡️ 안내:", result.instruction);
 
     if (result.instruction !== lastInstructionRef.current) {
-    lastInstructionRef.current = result.instruction;
-    
-    const { arrow, landmark } = parseInstructionForHUD(result.instruction);
-    setInstruction(result.instruction);
-    setToastMsg(`${arrow} ${landmark}`);
+      lastInstructionRef.current = result.instruction;
+
+    const { arrow, landmark } = parseInstructionForHUD(
+        result.instruction,
+        result.nextdistance ?? 0 // 🧩 여기서 거리 전달
+      );
+
+      setInstruction(result.instruction);
+      setToastMsg(`${arrow} ${landmark}`);
+      setArrow(arrow)
+      setLandmark(landmark)
     }
 
     subStepIdx++;
@@ -241,6 +251,7 @@ export default function NavigationScreen() {
 
   return () => clearInterval(interval);
 }, [guideList, parsedPathList]);
+
 
 
   return (

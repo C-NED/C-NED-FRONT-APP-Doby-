@@ -63,11 +63,13 @@ export const updateLocation = (current, pathFromRedis, guideList) => {
     ? '목적지에 도착했습니다.'
     : (nextStep?.instructions || guide?.instructions || '');
 
+  const nextdistance = Math.round(minDist)
+
   // 5. 디버깅 출력
   console.log(`📍 현재 위치: ${lat}, ${lng}`);
   console.log(`🧭 가장 가까운 path: ${matchedPath.coords[1]}, ${matchedPath.coords[0]} (pathidx: ${pathidx})`);
   console.log(`🚗 계산 속도: ${calculatedSpeed?.toFixed(2)} m/s`);
-  console.log(`➡️ 다음 안내: ${instruction} (${Math.round(minDist)}m 앞)`);
+  console.log(`➡️ 다음 안내: ${instruction} (${nextdistance}m 앞)`);
 
   return {
     speed: calculatedSpeed,
@@ -75,5 +77,6 @@ export const updateLocation = (current, pathFromRedis, guideList) => {
     instruction,
     closestPathIndex: closestIdx,
     matchedGuide: guide,
+    nextdistance
   };
 };
